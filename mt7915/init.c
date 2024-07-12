@@ -778,11 +778,12 @@ void mt7915_wfsys_reset(struct mt7915_dev *dev)
 static bool mt7915_band_config(struct mt7915_dev *dev)
 {
 	bool ret = true;
+	u32 sku = 0;
 
 	dev->phy.mt76->band_idx = 0;
 
 	if (is_mt798x(&dev->mt76)) {
-		u32 sku = mt7915_check_adie(dev, true);
+		sku = mt7915_check_adie(dev, true);
 
 		/*
 		 * for mt7986, dbdc support is determined by the number
@@ -798,6 +799,8 @@ static bool mt7915_band_config(struct mt7915_dev *dev)
 		      !!(mt76_rr(dev, MT_HW_BOUND) & BIT(5)) : true;
 	}
 
+	dev_warn(dev->mt76.dev, "%s: ret=%d, band_idx=%d, sku=0x%x\n",
+		__FUNCTION__, !!ret, dev->phy.mt76->band_idx, sku);
 	return ret;
 }
 

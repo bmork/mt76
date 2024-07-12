@@ -255,6 +255,9 @@ static int mt7915_add_interface(struct ieee80211_hw *hw,
 	mvif->sta.wcid.tx_info |= MT_WCID_TX_INFO_SET;
 	mt76_wcid_init(&mvif->sta.wcid);
 
+	dev_warn(dev->mt76.dev, "%s: phy->mt76->band_idx=%d, wcid.phy_idx=%d, phy=0x%p, &dev->phy=0x%p\n",
+		__FUNCTION__, phy->mt76->band_idx, mvif->sta.wcid.phy_idx, phy, &dev->phy);
+
 	mt7915_mac_wtbl_update(dev, idx,
 			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
 
@@ -758,6 +761,9 @@ int mt7915_mac_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
 	msta->wcid.phy_idx = ext_phy;
 	msta->wcid.tx_info |= MT_WCID_TX_INFO_SET;
 	msta->jiffies = jiffies;
+
+	dev_warn(mdev->dev, "%s: msta->wcid=%p, msta->wcid.phy_idx=%d, mvif->phy=0x%p, &dev->phy=0x%p\n",
+		__FUNCTION__, &msta->wcid, msta->wcid.phy_idx, mvif->phy, &dev->phy);
 
 	ewma_avg_signal_init(&msta->avg_ack_signal);
 

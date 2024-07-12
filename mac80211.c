@@ -498,6 +498,7 @@ mt76_alloc_phy(struct mt76_dev *dev, unsigned int size,
 	phy->hw = hw;
 	phy->priv = hw->priv + phy_size;
 	phy->band_idx = band_idx;
+	dev_warn(dev->dev, "%s: phy->band_idx=%d\n", __FUNCTION__, band_idx);
 
 	hw->wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
 	hw->wiphy->interface_modes =
@@ -644,6 +645,7 @@ mt76_alloc_device(struct device *pdev, unsigned int size,
 	phy->hw = hw;
 	phy->band_idx = MT_BAND0;
 	dev->phys[phy->band_idx] = phy;
+	dev_warn(dev->dev, "%s: phy->band_idx=%d\n", __FUNCTION__, phy->band_idx);
 
 	spin_lock_init(&dev->rx_lock);
 	spin_lock_init(&dev->lock);
@@ -1427,6 +1429,9 @@ mt76_sta_add(struct mt76_phy *phy, struct ieee80211_vif *vif,
 	if (phy->band_idx == MT_BAND1)
 		mt76_wcid_mask_set(dev->wcid_phy_mask, wcid->idx);
 	wcid->phy_idx = phy->band_idx;
+
+	dev_warn(dev->dev, "%s: wcid=%p, phy=%p, wcid->phy_idx=%d, phy->band_idx=%d\n",__FUNCTION__, wcid, phy, wcid->phy_idx, phy->band_idx);
+
 	rcu_assign_pointer(dev->wcid[wcid->idx], wcid);
 
 	mt76_wcid_init(wcid);
@@ -1516,16 +1521,22 @@ EXPORT_SYMBOL_GPL(mt76_wcid_init);
 
 void mt76_wcid_cleanup(struct mt76_dev *dev, struct mt76_wcid *wcid)
 {
-	struct mt76_phy *phy = dev->phys[wcid->phy_idx];
+	struct mt76_phy *phy = mt76_dev_phy(dev, wcid->phy_idx);
 	struct ieee80211_hw *hw;
 	struct sk_buff_head list;
 	struct sk_buff *skb;
+
+	dev_warn(dev->dev, "phy=0x%p, offsetof(tx_lock)=0x%zx, wcid->phy_idx=%d\n",
+		phy, offsetof(struct mt76_phy, tx_lock), wcid->phy_idx);
 
 	mt76_tx_status_lock(dev, &list);
 	mt76_tx_status_skb_get(dev, wcid, -1, &list);
 	mt76_tx_status_unlock(dev, &list);
 
 	idr_destroy(&wcid->pktid);
+
+	if (!phy)
+		return;
 
 	spin_lock_bh(&phy->tx_lock);
 
